@@ -13,6 +13,31 @@ export class UsersService {
     @InjectRepository(UserProfile) private readonly profileRepo: Repository<UserProfile>,
   ) {}
 
+async findByEmail(mun_email: string) {
+    return this.userRepo.findOne({ where: { mun_email } });
+  }
+
+  async create(mun_email: string, first_name = '') {
+    const user = this.userRepo.create({ mun_email, first_name, is_email_verified: false });
+    return this.userRepo.save(user);
+  }
+
+  async findOrCreate(mun_email: string, first_name = '') {
+    let user = await this.findByEmail(mun_email);
+    if (!user) user = await this.create(mun_email, first_name);
+    return user;
+  }
+
+  async setPassword(mun_email: string, password_hash: string) {
+    await this.userRepo.update({ mun_email }, { password_hash: password_hash });
+    return this.findByEmail(mun_email);
+  }
+
+  async markVerified(mun_email: string) {
+    await this.userRepo.update({ mun_email }, { is_email_verified: true });
+    return this.findByEmail(mun_email);
+  }
+
   async findOne(user_id: string) {
     const user = await this.userRepo.findOne({ where: { user_id } });
     if (!user) throw new NotFoundException('User not found');
